@@ -1,3 +1,4 @@
+from random import shuffle
 import tensorflow as tf
 from tensorflow.keras import Sequential, Input
 from tensorflow.keras.layers import Dense
@@ -25,6 +26,7 @@ for i in range(len(ds)):
                 convertedData.append(0)
             else:
                 convertedData.append(vocabDict[ds.iloc[i, 2][c]])
+    convertedData.append(float(ds.iloc[i, 5][:-3]))  # append numeric mass
 
     if i < len(ds) // (5/3):  # append first 60% of data to training
         trainX.append(convertedData)
@@ -55,14 +57,15 @@ testX = np.array(testX)
 testY = np.array(testY)
 
 model = Sequential()
-model.add(tf.keras.Input(shape=(longestSmile,)))
+model.add(tf.keras.Input(shape=(longestSmile+1,)))
+model.add(Dense(512, activation='sigmoid'))
 model.add(Dense(256, activation='sigmoid'))
-model.add(Dense(64, activation='sigmoid'))
+# model.add(Dense(256, activation='sigmoid'))
 model.add(Dense(16, activation='sigmoid'))
 model.add(Dense(1, activation='relu'))
 
 model.compile(optimizer='adam', loss='mse', metrics=['mse'])
-model.fit(trainX, trainY, validation_data=(valX, valY), epochs=100, batch_size=2)
+model.fit(trainX, trainY, validation_data=(valX, valY), epochs=500, batch_size=4, shuffle=True)
 mse, mae = model.evaluate(testX, testY, verbose=0)
 print('MSE: %.3f,  MAE: %.3f' % (mse, mae))
 
