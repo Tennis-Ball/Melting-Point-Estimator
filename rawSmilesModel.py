@@ -9,7 +9,7 @@ import numpy as np
 import math
 
 
-ds = pd.read_excel("test.xlsx")  # import dataset from excel
+ds = pd.read_excel("datasets/test500.xlsx")  # import dataset from excel
 # initialize data/label sets
 trainX = []
 trainY = []
@@ -20,13 +20,13 @@ testY = []
 
 for i in range(len(ds)):
     if i < len(ds) // (5/3):  # append first 60% of data to training
-        trainX.append(ds.iloc[i, 2])
+        trainX.append(' '.join(list(ds.iloc[i, 2])))
         trainY.append(ds.iloc[i, 3])
     elif i < len(ds) // (5/4):  # append next 20% of data to validation
-        valX.append(ds.iloc[i, 2])
+        valX.append(' '.join(list(ds.iloc[i, 2])))
         valY.append(ds.iloc[i, 3])
     else:  # append last 20% of data to testing
-        testX.append(ds.iloc[i, 2])
+        testX.append(' '.join(list(ds.iloc[i, 2])))
         testY.append(ds.iloc[i, 3])
 
 # standardize melting points to range from 0 to 1
@@ -227,7 +227,7 @@ loss = tf.keras.losses.MeanSquaredError()
 metrics = tf.metrics.MeanSquaredError()
 
 # set model parameters
-epochs = 15
+epochs = 5
 steps_per_epoch = tf.data.experimental.cardinality(tf.data.Dataset.from_tensor_slices(trainX)).numpy()
 num_train_steps = steps_per_epoch * epochs
 num_warmup_steps = int(0.1*num_train_steps)

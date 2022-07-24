@@ -1,6 +1,6 @@
 import pandas as pd
 from rdkit import Chem
-from constants import fgSmiles
+from helper.constants import fgSmiles
 
 ds = pd.read_excel("test.xlsx")
 fgs = []
