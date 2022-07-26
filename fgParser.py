@@ -2,7 +2,7 @@ import pandas as pd
 from rdkit import Chem
 from helper.constants import fgSmiles
 
-ds = pd.read_excel("test.xlsx")
+ds = pd.read_excel("datasets/test500.xlsx")
 fgs = []
 
 for smileNotationIdx in range(len(ds.iloc[:, 2])):

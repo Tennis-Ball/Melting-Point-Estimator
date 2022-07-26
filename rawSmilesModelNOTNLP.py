@@ -1,4 +1,3 @@
-from random import shuffle
 import tensorflow as tf
 from tensorflow.keras import Sequential, Input
 from tensorflow.keras.layers import Dense
@@ -57,7 +56,7 @@ testX = np.array(testX)
 testY = np.array(testY)
 
 model = Sequential()
-model.add(tf.keras.Input(shape=(longestSmile+1,)))
+model.add(Input(shape=(longestSmile+1,)))
 model.add(Dense(512, activation='sigmoid'))
 model.add(Dense(256, activation='sigmoid'))
 # model.add(Dense(256, activation='sigmoid'))
