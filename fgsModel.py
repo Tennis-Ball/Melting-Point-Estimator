@@ -54,6 +54,7 @@ mostFgs = len(sorted(dataX, reverse=True, key=len)[0])
 for smile in range(len(dataX)):
     for i in range(mostFgs - len(dataX[smile])):
         dataX[smile].append(0)  # standardize length
+    dataX[smile].append(float(labels.iloc[smile, 5][:-3]))  # append mass
 
 # scale labels
 minDataY = min(dataY)
@@ -73,17 +74,17 @@ print(len(valX), len(valY))
 print(len(testX), len(testY))
 
 model = Sequential()
-model.add(Input(shape=(mostFgs,)))
+model.add(Input(shape=(mostFgs+1,)))
 # model.add(Dense(512, activation='sigmoid'))
-# model.add(Dense(256, activation='sigmoid'))
-# model.add(Dense(256, activation='sigmoid'))
+model.add(Dense(mostFgs, activation='sigmoid'))
 model.add(Dense(16, activation='sigmoid'))
 model.add(Dense(1, activation='relu'))
 
 model.compile(optimizer='adam', loss='mse', metrics=['mse'])
-model.fit(trainX, trainY, validation_data=(valX, valY), epochs=100, batch_size=1, shuffle=True)
+model.fit(trainX, trainY, validation_data=(valX, valY), epochs=15, batch_size=1, shuffle=True)
 mse, mae = model.evaluate(testX, testY, verbose=0)
-print('MSE: %.3f,  MAE: %.3f' % (mse, mae))
 
 for i, prediction in enumerate(model.predict(testX)):
     print(f"Predicted: {prediction[0]*maxDataY+minDataY} Actual: {testY[i]*maxDataY+minDataY}")
+
+print('MSE: %.3f,  MAE: %.3f' % (mse, mae))
