@@ -2,7 +2,7 @@ import pandas as pd
 from rdkit import Chem
 from helper.constants import fgSmiles
 
-ds = pd.read_excel("datasets/test500.xlsx")
+ds = pd.read_excel("datasets/test2500.xlsx")
 fgs = []
 
 for smileNotationIdx in range(len(ds.iloc[:, 2])):
@@ -17,6 +17,8 @@ for smileNotationIdx in range(len(ds.iloc[:, 2])):
                 fgs[smileNotationIdx].append([str(fgSmile), str(foundFg)])
         except Exception as e:
             pass
+    
+    print(smilesNotationIdx + " of " + len(ds.iloc[:, 2]))
 
 print(pd.DataFrame(fgs))
 pd.DataFrame(fgs).to_excel("fgs.xlsx")

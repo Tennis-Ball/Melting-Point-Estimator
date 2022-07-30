@@ -5,7 +5,7 @@ import pandas as pd
 ds = pd.read_excel("datasets/dataset.xlsx")
 masses = []
 
-for i in range(2500):
+for i in range(2500, 7645):
     try:
         r = requests.get("http://www.chemspider.com/Chemical-Structure." + str(ds.iloc[i, 4]) + ".html")
         mass = r.text[r.text.find("Average mass") + 19:]
