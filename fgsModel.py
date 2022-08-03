@@ -1,3 +1,5 @@
+from helper.datapointReduction import reduce
+
 import tensorflow as tf
 from tensorflow.keras import Sequential, Input
 from tensorflow.keras.layers import Dense, Dropout
@@ -13,8 +15,8 @@ dataRaw = []
 
 
 # clean fg data
-data = pd.read_excel("helper/fgs7900.xlsx")
-labels = pd.read_excel("datasets/dataset7900.xlsx")
+data = pd.read_excel("helper/fgsFull.xlsx")
+labels = pd.read_excel("datasets/datasetFull.xlsx")
 # data = pd.read_excel("helper/fgs100.xlsx")
 # labels = pd.read_excel("datasets/test100.xlsx")
 
@@ -57,59 +59,70 @@ for smile in range(len(dataRaw)):
 
 mostFgs = len(sorted(dataX, reverse=True, key=len)[0])
 buffer = 0
+maxMass = max(labels.iloc[:, 5][:-3])
+minMass = min(labels.iloc[:, 5][:-3])
+print(minMass, 'ppp', maxMass)
 for smile in range(len(dataX)):
     for i in range(mostFgs - len(dataX[smile - buffer])):
         dataX[smile - buffer].append(0)  # standardize length
+    dataX[smile - buffer] = [x / mostFgs for x in dataX[smile - buffer]]  # normalize
     
     try:
-        dataX[smile - buffer].append(float(labels.iloc[smile, 5][:-3]))  # append mass
+        mass = float(labels.iloc[smile, 5][:-3])
+        mass = (mass - minMass) / (maxMass - minMass)  # normalize
+        dataX[smile - buffer].append(mass)  # append mass
         dataY.append(labels.iloc[smile - buffer, 3])
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError) as e:  # if mass was not scraped correctly ('', ' da')
         del dataX[smile-buffer]
         buffer += 1
-print(len(dataX))
-
-# scale labels
-minDataY = min(dataY)
-maxDataY = max(dataY)
-dataY = (dataY - minDataY) / maxDataY
 
 # shuffle data
 data = list(zip(dataX, dataY))
 random.shuffle(data)
 dataX, dataY = zip(*data)
 
+# reduce data for uniformity
+dataX, dataY = reduce(dataX, dataY)
+print(np.mean(dataY), max(set(dataY), key=dataY.count))
+
+# reshuffle data
+data = list(zip(dataX, dataY))
+random.shuffle(data)
+dataX, dataY = zip(*data)
+
+# scale labels
+minDataY = min(dataY)
+maxDataY = max(dataY)
+dataY = (dataY - minDataY) / (maxDataY - minDataY)
+
 # convert to numpy arrays
 trainX = np.array(dataX[:int(len(dataX)*0.6)])
 trainY = np.array(dataY[:int(len(dataY)*0.6)])
 valX = np.array(dataX[int(len(dataX)*0.6):int(len(dataX)*0.8)])
 valY = np.array(dataY[int(len(dataY)*0.6):int(len(dataY)*0.8)])
-testX = np.array(dataX[int(len(dataX)*0.8):])
-testY = np.array(dataY[int(len(dataY)*0.8):])
-
-print(len(trainX), len(trainY))
-print(len(valX), len(valY))
-print(len(testX), len(testY))
-print(np.shape(trainX), buffer)
+# testX = np.array(dataX[int(len(dataX)*0.8):])
+# testY = np.array(dataY[int(len(dataY)*0.8):])
+testX = np.array(dataX[-20:])
+testY = np.array(dataY[-20:])
 
 model = Sequential()
 model.add(Input(shape=(mostFgs+1,)))
 model.add(Dropout(0.2))
-model.add(Dense(512, activation='sigmoid'))
-model.add(Dense(256, activation='sigmoid'))
-model.add(Dense(128, activation='sigmoid'))
-model.add(Dense(32, activation='sigmoid'))
-model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(4, activation='relu'))
+model.add(Dense(1, activation='relu'))
 
 model.compile(optimizer='adam', loss='mse', metrics=['mse'])
-history = model.fit(trainX, trainY, validation_data=(valX, valY), epochs=100, batch_size=4, shuffle=True)
+history = model.fit(trainX, trainY, validation_data=(valX, valY), epochs=10, batch_size=32, shuffle=True)
 mse, mae = model.evaluate(testX, testY, verbose=0)
 
 output, expectedOutput = [], []
 for i, prediction in enumerate(model.predict(testX)):
-    # print(f"Predicted: {prediction[0]*maxDataY+minDataY} Actual: {testY[i]*maxDataY+minDataY}")
-    output.append(prediction[0]*maxDataY+minDataY)
-    expectedOutput.append(testY[i]*maxDataY+minDataY)
+    print(f"Predicted: {prediction[0]*(maxDataY-minDataY)+minDataY} Actual: {testY[i]*(maxDataY-minDataY)+minDataY}")
+    output.append(prediction[0]*(maxDataY-minDataY)+minDataY)
+    expectedOutput.append(testY[i]*(maxDataY-minDataY)+minDataY)
 
 print('MSE: %.3f,  MAE: %.3f' % (mse, mae))
 print('Scaled mean error: %.3f' % ((np.abs((np.array(output) - np.array(expectedOutput)))).mean()))
